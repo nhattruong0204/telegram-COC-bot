@@ -1,0 +1,4 @@
+apscheduler==3.9.1
+python-dotenv==0.21.0
+python-telegram-bot==20.0
+requests==2.31.0
