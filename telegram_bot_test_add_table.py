@@ -20,8 +20,8 @@ load_dotenv()
 # Retrieve API_KEY, CLAN_TAG, TELEGRAM_TOKEN, and TELEGRAM_CHAT_ID from environment variables
 API_KEY = os.getenv('API_KEY')
 CLAN_TAG = os.getenv('CLAN_TAG')
-TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
-TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
+TELEGRAM_TOKEN = os.getenv('TELEGRAM_TEST_TOKEN')
+TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_TEST_CHAT_ID')
 
 if not API_KEY or not CLAN_TAG or not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
     logging.error("API_KEY, CLAN_TAG, TELEGRAM_TOKEN, or TELEGRAM_CHAT_ID not set. Please check your .env file.")
@@ -54,13 +54,8 @@ def fetch_top_clan_trophies():
         # Get the top 15 members
         top_members = sorted_members[:15]
         
-        # Prepare the trophy list message
-        trophy_list_message = "Top 15 Clan Members by Trophies:\n"
-        for idx, member in enumerate(top_members, start=1):
-            name = member['name']
-            tag = member['tag']
-            trophies = member['trophies']
-            trophy_list_message += f"{idx}. {name} (Tag: {tag}): {trophies} trophies\n"
+        # Format the trophy list as a table
+        trophy_list_message = format_trophy_table(top_members)
 
         return top_members, trophy_list_message
     
@@ -73,6 +68,24 @@ def fetch_top_clan_trophies():
     except Exception as e:
         logging.error(f"An unexpected error occurred: {e}")
         return None, "An unexpected error occurred."
+
+# Function to format the trophy list as a table
+def format_trophy_table(members):
+    table_message = "<pre>"
+    table_message += "╔════╤════════════════════════════╤════════════╤══════════╗\n"
+    table_message += "║ #  │ Name                       │ Tag        │ Trophies ║\n"
+    table_message += "╠════╪════════════════════════════╪════════════╪══════════╣\n"
+
+    for idx, member in enumerate(members, start=1):
+        name = member['name'][:25]  # Truncate names to fit within the table
+        tag = member['tag']
+        trophies = member['trophies']
+        table_message += f"║ {idx:<2} │ {name:<25} │ {tag:<10} │ {trophies:<8} ║\n"
+
+    table_message += "╚════╧════════════════════════════╧════════════╧══════════╝\n"
+    table_message += "</pre>"
+
+    return table_message
 
 # Function to calculate trophy differences and record attack/defend outcomes
 async def check_trophy_differences(application):
@@ -164,7 +177,7 @@ def create_status_table_html(tag):
 # Command handler to check trophy information
 async def check_trophy(update: Update, context: ContextTypes.DEFAULT_TYPE):
     _, trophy_list_message = fetch_top_clan_trophies()
-    await update.message.reply_text(trophy_list_message)
+    await update.message.reply_text(trophy_list_message, parse_mode=ParseMode.HTML)
 
 # Command handler to check player status by tag
 async def check_player_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -203,7 +216,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if query.data == 'check_trophy':
         _, trophy_list_message = fetch_top_clan_trophies()
-        await context.bot.send_message(chat_id=query.message.chat_id, text=trophy_list_message)
+        await context.bot.send_message(chat_id=query.message.chat_id, text=trophy_list_message, parse_mode=ParseMode.HTML)
     elif query.data == 'check_status':
         await query.message.reply_text('Please enter the player tag using /check_status <player_tag> command.')
     elif query.data == 'check_global_ranking':
