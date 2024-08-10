@@ -69,20 +69,19 @@ def fetch_top_clan_trophies():
         logging.error(f"An unexpected error occurred: {e}")
         return None, "An unexpected error occurred."
 
-# Function to format the trophy list as a table with centralized columns
+# Function to format the trophy list as a table with reordered columns
 def format_trophy_table(members):
     table_message = "<pre>"
-    table_message += "╔════╤════════════════════════════╤════════════╤══════════╗\n"
-    table_message += "║ #  │ Name                       │    Tag     │ Trophies ║\n"
-    table_message += "╠════╪════════════════════════════╪════════════╪══════════╣\n"
+    table_message += "╔════╤══════════╤════════════════════════════╗\n"
+    table_message += "║ #  │ Trophies │ Name                       ║\n"
+    table_message += "╠════╪══════════╪════════════════════════════╣\n"
 
     for idx, member in enumerate(members, start=1):
         name = member['name'][:25]  # Truncate names to fit within the table
-        tag = member['tag']
         trophies = member['trophies']
-        table_message += f"║ {idx:<2} │ {name:<25} │ {tag:^10} │ {trophies:^8} ║\n"
+        table_message += f"║ {idx:<2} │ {trophies:^8} │ {name:<25} ║\n"
 
-    table_message += "╚════╧════════════════════════════╧════════════╧══════════╝\n"
+    table_message += "╚════╧══════════╧════════════════════════════╝\n"
     table_message += "</pre>"
 
     return table_message
