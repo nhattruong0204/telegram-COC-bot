@@ -4,7 +4,7 @@ import os
 import html
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
-from telegram.constants import ParseMode  # Correct import for ParseMode
+from telegram.constants import ParseMode
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from dotenv import load_dotenv
 
@@ -108,17 +108,18 @@ async def check_trophy_differences(application):
             player_stats[tag]['attacks'] = player_stats[tag]['attacks'][-8:]
             player_stats[tag]['defends'] = player_stats[tag]['defends'][-8:]
 
-            # Escape any Markdown special characters in player name and tag
+            # Escape any HTML special characters in player name and tag
             safe_name = html.escape(name)
             safe_tag = html.escape(tag)
 
-            # Create and send the trophy change message including player index
+            # Create and send the trophy change message using HTML formatting
             trophy_change_message = (
-                f"{idx}. {safe_name} (Tag: {safe_tag}): {trophies} trophies (Change: {trophy_difference})\n"
-                f"Status Table:\n{create_status_table(tag)}"
+                f"<b>{idx}. {safe_name}</b> (Tag: <code>{safe_tag}</code>): <b>{trophies} trophies</b> "
+                f"(Change: <i>{trophy_difference}</i>)<br/>"
+                f"<b>Status Table:</b><br/>{create_status_table_html(tag)}"
             )
             logging.debug(f"Sending message: {trophy_change_message}")
-            await application.bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=trophy_change_message, parse_mode=ParseMode.MARKDOWN)
+            await application.bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=trophy_change_message, parse_mode=ParseMode.HTML)
 
         # Update the previous trophies using the player's tag
         previous_trophies[tag] = trophies
@@ -126,13 +127,13 @@ async def check_trophy_differences(application):
     if not changes_detected:
         logging.info("No changes detected, no message sent.")
 
-# Function to create a table-like message for player status
-def create_status_table(tag):
+# Function to create a table-like message for player status with HTML formatting
+def create_status_table_html(tag):
     stats = player_stats.get(tag, {'attacks': [], 'defends': []})
     attack_lines = stats['attacks']
     defend_lines = stats['defends']
 
-    # Calculate total trophies gained and lost, ignoring 'NA'
+    # Calculate total trophies gained and lost
     total_attack_trophies = sum(trophy for trophy in attack_lines if isinstance(trophy, int))
     total_defend_trophies = -sum(trophy for trophy in defend_lines if isinstance(trophy, int))  # Show as negative
 
@@ -143,16 +144,16 @@ def create_status_table(tag):
     attack_lines.extend(['NA'] * (8 - len(attack_lines)))
     defend_lines.extend(['NA'] * (8 - len(defend_lines)))
 
-    # Create table with totals
-    table_message = f"*Attacks (Total: {total_attack_trophies})* |  *Defends (Total: {total_defend_trophies})*\n"
-    table_message += "------------------------|------------------------\n"
+    # Create table with totals using HTML
+    table_message = f"<b>Attacks (Total: {total_attack_trophies})</b> | <b>Defends (Total: {total_defend_trophies})</b><br/>"
+    table_message += "<code>-----------------------|-----------------------</code><br/>"
 
     for attack, defend in zip(attack_lines, defend_lines):
-        table_message += f"{str(attack):>10}             |  {str(defend):>10}\n"
+        table_message += f"<code>{str(attack):>10}            |  {str(defend):>10}</code><br/>"
 
     # Add net gain/loss row
-    table_message += "------------------------|------------------------\n"
-    table_message += f"*Net Trophy Gain: {net_trophy_gain}*\n"
+    table_message += "<code>-----------------------|-----------------------</code><br/>"
+    table_message += f"<b>Net Trophy Gain: {net_trophy_gain}</b><br/>"
 
     return table_message
 
@@ -168,8 +169,8 @@ async def check_player_status(update: Update, context: ContextTypes.DEFAULT_TYPE
         return
     
     tag = context.args[0].strip()
-    response_message = create_status_table(tag)
-    await update.message.reply_text(response_message, parse_mode=ParseMode.MARKDOWN)
+    response_message = create_status_table_html(tag)
+    await update.message.reply_text(response_message, parse_mode=ParseMode.HTML)
 
 # Command handler to check player global ranking by tag
 async def check_player_global_ranking(update: Update, context: ContextTypes.DEFAULT_TYPE):
