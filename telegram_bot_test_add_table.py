@@ -20,8 +20,8 @@ load_dotenv()
 # Retrieve API_KEY, CLAN_TAG, TELEGRAM_TOKEN, and TELEGRAM_CHAT_ID from environment variables
 API_KEY = os.getenv('API_KEY')
 CLAN_TAG = os.getenv('CLAN_TAG')
-TELEGRAM_TOKEN = os.getenv('TELEGRAM_TEST_TOKEN')
-TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_TEST_CHAT_ID')
+TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
+TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 
 if not API_KEY or not CLAN_TAG or not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
     logging.error("API_KEY, CLAN_TAG, TELEGRAM_TOKEN, or TELEGRAM_CHAT_ID not set. Please check your .env file.")
