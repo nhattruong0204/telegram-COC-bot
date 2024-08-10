@@ -1,6 +1,7 @@
 import requests
 import logging
 import os
+import html
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
 from telegram.constants import ParseMode  # Correct import for ParseMode
@@ -107,11 +108,16 @@ async def check_trophy_differences(application):
             player_stats[tag]['attacks'] = player_stats[tag]['attacks'][-8:]
             player_stats[tag]['defends'] = player_stats[tag]['defends'][-8:]
 
-            # Create and send the trophy change message
+            # Escape any Markdown special characters in player name and tag
+            safe_name = html.escape(name)
+            safe_tag = html.escape(tag)
+
+            # Create and send the trophy change message including player index
             trophy_change_message = (
-                f"{idx}. {name} (Tag: {tag}): {trophies} trophies (Change: {trophy_difference})\n"
+                f"{idx}. {safe_name} (Tag: {safe_tag}): {trophies} trophies (Change: {trophy_difference})\n"
                 f"Status Table:\n{create_status_table(tag)}"
             )
+            logging.debug(f"Sending message: {trophy_change_message}")
             await application.bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=trophy_change_message, parse_mode=ParseMode.MARKDOWN)
 
         # Update the previous trophies using the player's tag
