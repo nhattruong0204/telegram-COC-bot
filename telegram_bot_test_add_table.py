@@ -115,8 +115,8 @@ async def check_trophy_differences(application):
             # Create and send the trophy change message using HTML formatting
             trophy_change_message = (
                 f"<b>{idx}. {safe_name}</b> (Tag: <code>{safe_tag}</code>): <b>{trophies} trophies</b> "
-                f"(Change: <i>{trophy_difference}</i>)<br/>"
-                f"<b>Status Table:</b><br/>{create_status_table_html(tag)}"
+                f"(Change: <i>{trophy_difference}</i>)<br>"
+                f"<b>Status Table:</b><br>{create_status_table_html(tag)}"
             )
             logging.debug(f"Sending message: {trophy_change_message}")
             await application.bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=trophy_change_message, parse_mode=ParseMode.HTML)
@@ -145,15 +145,15 @@ def create_status_table_html(tag):
     defend_lines.extend(['NA'] * (8 - len(defend_lines)))
 
     # Create table with totals using HTML
-    table_message = f"<b>Attacks (Total: {total_attack_trophies})</b> | <b>Defends (Total: {total_defend_trophies})</b><br/>"
-    table_message += "<code>-----------------------|-----------------------</code><br/>"
+    table_message = f"<b>Attacks (Total: {total_attack_trophies})</b> | <b>Defends (Total: {total_defend_trophies})</b><br>"
+    table_message += "<code>-----------------------|-----------------------</code><br>"
 
     for attack, defend in zip(attack_lines, defend_lines):
-        table_message += f"<code>{str(attack):>10}            |  {str(defend):>10}</code><br/>"
+        table_message += f"<code>{str(attack):>10}            |  {str(defend):>10}</code><br>"
 
     # Add net gain/loss row
-    table_message += "<code>-----------------------|-----------------------</code><br/>"
-    table_message += f"<b>Net Trophy Gain: {net_trophy_gain}</b><br/>"
+    table_message += "<code>-----------------------|-----------------------</code><br>"
+    table_message += f"<b>Net Trophy Gain: {net_trophy_gain}</b><br>"
 
     return table_message
 
