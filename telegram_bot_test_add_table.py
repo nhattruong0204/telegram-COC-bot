@@ -73,7 +73,7 @@ def fetch_top_clan_trophies():
 def format_trophy_table(members):
     table_message = "<pre>"
     table_message += "╔════╤══════════╤═════════════════════\n"
-    table_message += "║ #  │ Trophies │ Name                   \n"
+    table_message += "║ #  │ Trophies │ Name                \n"
     table_message += "╠════╪══════════╪═════════════════════\n"
 
     for idx, member in enumerate(members, start=1):
