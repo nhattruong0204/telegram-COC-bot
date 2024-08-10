@@ -79,7 +79,7 @@ def format_trophy_table(members):
     for idx, member in enumerate(members, start=1):
         name = member['name'][:25]  # Truncate names to fit within the table
         trophies = member['trophies']
-        table_message += f"║{idx:<2} │ {trophies:^7} │ {name:<25}\n"
+        table_message += f"║{idx:<2} │ {trophies:^7}│ {name:<25}\n"
 
     table_message += "╚═══╧════════╧═════════════════════\n"
     table_message += "</pre>"
