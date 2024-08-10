@@ -20,8 +20,8 @@ load_dotenv()
 # Retrieve API_KEY, CLAN_TAG, TELEGRAM_TOKEN, and TELEGRAM_CHAT_ID from environment variables
 API_KEY = os.getenv('API_KEY')
 CLAN_TAG = os.getenv('CLAN_TAG')
-TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
-TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
+TELEGRAM_TOKEN = os.getenv('TELEGRAM_TEST_TOKEN')
+TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_TEST_CHAT_ID')
 
 if not API_KEY or not CLAN_TAG or not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
     logging.error("API_KEY, CLAN_TAG, TELEGRAM_TOKEN, or TELEGRAM_CHAT_ID not set. Please check your .env file.")
@@ -69,18 +69,18 @@ def fetch_top_clan_trophies():
         logging.error(f"An unexpected error occurred: {e}")
         return None, "An unexpected error occurred."
 
-# Function to format the trophy list as a table
+# Function to format the trophy list as a table with centralized columns
 def format_trophy_table(members):
     table_message = "<pre>"
     table_message += "╔════╤════════════════════════════╤════════════╤══════════╗\n"
-    table_message += "║ #  │ Name                       │ Tag        │ Trophies ║\n"
+    table_message += "║ #  │ Name                       │    Tag     │ Trophies ║\n"
     table_message += "╠════╪════════════════════════════╪════════════╪══════════╣\n"
 
     for idx, member in enumerate(members, start=1):
         name = member['name'][:25]  # Truncate names to fit within the table
         tag = member['tag']
         trophies = member['trophies']
-        table_message += f"║ {idx:<2} │ {name:<25} │ {tag:<10} │ {trophies:<8} ║\n"
+        table_message += f"║ {idx:<2} │ {name:<25} │ {tag:^10} │ {trophies:^8} ║\n"
 
     table_message += "╚════╧════════════════════════════╧════════════╧══════════╝\n"
     table_message += "</pre>"
