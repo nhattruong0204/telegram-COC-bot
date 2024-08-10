@@ -20,8 +20,8 @@ load_dotenv()
 # Retrieve API_KEY, CLAN_TAG, TELEGRAM_TOKEN, and TELEGRAM_CHAT_ID from environment variables
 API_KEY = os.getenv('API_KEY')
 CLAN_TAG = os.getenv('CLAN_TAG')
-TELEGRAM_TOKEN = os.getenv('TELEGRAM_TEST_TOKEN')
-TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_TEST_CHAT_ID')
+TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
+TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 
 if not API_KEY or not CLAN_TAG or not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
     logging.error("API_KEY, CLAN_TAG, TELEGRAM_TOKEN, or TELEGRAM_CHAT_ID not set. Please check your .env file.")
@@ -144,16 +144,20 @@ def create_status_table_html(tag):
     attack_lines.extend(['NA'] * (8 - len(attack_lines)))
     defend_lines.extend(['NA'] * (8 - len(defend_lines)))
 
-    # Create table with totals using HTML
-    table_message = f"<b>Attacks (Total: {total_attack_trophies})</b> | <b>Defends (Total: {total_defend_trophies})</b>\n"
-    table_message += "<code>-----------------------|-----------------------</code>\n"
+    # Create a compact table using box-drawing characters
+    table_message = f"<pre>"
+    table_message += f"╔═══════════════╤═══════════════╗\n"
+    table_message += f"║ Attacks: {total_attack_trophies:^4} │ Defends: {total_defend_trophies:^4} ║\n"
+    table_message += f"╠═══════════════╪═══════════════╣\n"
 
     for attack, defend in zip(attack_lines, defend_lines):
-        table_message += f"<code>{str(attack):>10}            |  {str(defend):>10}</code>\n"
+        table_message += f"║ {str(attack):^13} │ {str(defend):^13} ║\n"
 
     # Add net gain/loss row
-    table_message += "<code>-----------------------|-----------------------</code>\n"
-    table_message += f"<b>Net Trophy Gain: {net_trophy_gain}</b>\n"
+    table_message += f"╠═══════════════╧═══════════════╣\n"
+    table_message += f"║ Net Gain: {net_trophy_gain:^5} ║\n"
+    table_message += f"╚═══════════════════════════════╝\n"
+    table_message += f"</pre>"
 
     return table_message
 
