@@ -29,8 +29,8 @@ if not API_KEY or not CLAN_TAG or not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
     logging.error("API_KEY, CLAN_TAG, TELEGRAM_TOKEN, or TELEGRAM_CHAT_ID not set. Please check your .env file.")
     exit(1)
 
-# Define the UTC+7 timezone
-UTC_PLUS_7 = timezone(timedelta(hours=7))
+# Define the UTC-5 timezone
+UTC_MINUS_5 = timezone(timedelta(hours=-5))
 
 # Dictionary to store previous trophies using player tags
 previous_trophies = {}
@@ -184,7 +184,7 @@ def format_trophy_table(members):
 async def check_trophy_differences(application):
     logging.info("Checking for trophy changes...")
     conn = init_db()
-    current_datetime = datetime.now(UTC_PLUS_7)  # Use UTC+7 timezone
+    current_datetime = datetime.now(UTC_MINUS_5)  # Use UTC-5 timezone
     top_members, _ = fetch_top_clan_trophies()
     if top_members is None:
         logging.error("Failed to fetch data for trophy differences check.")
@@ -313,17 +313,17 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         tag = query.data.split('_')[1]
         logging.debug(f"Checking status for player with tag: {tag}")
         conn = init_db()
-        current_date = datetime.now(UTC_PLUS_7).date()  # Use UTC+7 timezone
+        current_date = datetime.now(UTC_MINUS_5).date()  # Use UTC-5 timezone
         response_message = create_status_table_html(conn, tag, current_date)
         conn.close()
         await query.message.reply_text(response_message, parse_mode=ParseMode.HTML)
 
-# Function to reset player stats daily at 12:00 PM UTC+7
+# Function to reset player stats daily at 12:00 PM UTC-5
 async def reset_player_stats(application):
     conn = init_db()
     cursor = conn.cursor()
     # Prepare for a new day
-    current_date = datetime.now(UTC_PLUS_7).date()  # Use UTC+7 timezone
+    current_date = datetime.now(UTC_MINUS_5).date()  # Use UTC-5 timezone
     new_day_date = current_date + timedelta(days=1)
     
     # Insert initial records for the next day with the current trophies
@@ -355,8 +355,8 @@ def main():
     # Set up the scheduler
     scheduler = AsyncIOScheduler()
     scheduler.add_job(check_trophy_differences, 'interval', seconds=45, args=[application])  # Run every 45 seconds
-    # Adjust scheduler for resetting player stats at 12:00 PM UTC+7 daily (5:00 AM UTC)
-    scheduler.add_job(reset_player_stats, 'cron', hour=5, minute=0, args=[application])  # UTC+7 is UTC-2 in cron
+    # Adjust scheduler for resetting player stats at 12:00 PM UTC-5 daily (5:00 AM UTC)
+    scheduler.add_job(reset_player_stats, 'cron', hour=17, minute=0, args=[application])  # UTC-5 is 17:00
 
     scheduler.start()
 
