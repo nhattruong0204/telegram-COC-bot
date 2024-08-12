@@ -231,15 +231,16 @@ async def check_trophy_differences(application):
 # Function to create a table-like message for player status with HTML formatting
 def create_status_table_html(conn, tag, date):
     cursor = conn.cursor()
-    cursor.execute('SELECT time, event_type, trophy_change FROM player_events WHERE tag = ? AND date = ?', (tag, date))
+    cursor.execute('SELECT event_type, trophy_change FROM player_events WHERE tag = ? AND date = ?', (tag, date))
     rows = cursor.fetchall()
 
-    attack_lines = [f"{row[0]}: {row[2]}" for row in rows if row[1] == 'attack']
-    defend_lines = [f"{row[0]}: {row[2]}" for row in rows if row[1] == 'defend']
+    # Separate attacks and defends
+    attack_lines = [row[1] for row in rows if row[0] == 'attack']
+    defend_lines = [row[1] for row in rows if row[0] == 'defend']
 
     # Calculate total trophies gained and lost
-    total_attack_trophies = sum(int(trophy.split(": ")[1]) for trophy in attack_lines)
-    total_defend_trophies = sum(int(trophy.split(": ")[1]) for trophy in defend_lines)
+    total_attack_trophies = sum(attack_lines)
+    total_defend_trophies = sum(defend_lines)
 
     # Calculate net trophy gain/loss
     net_trophy_gain = total_attack_trophies + total_defend_trophies
@@ -253,9 +254,9 @@ def create_status_table_html(conn, tag, date):
     # Dynamically add rows for each attack and defense
     max_lines = max(len(attack_lines), len(defend_lines))
     for i in range(max_lines):
-        attack_value = attack_lines[i] if i < len(attack_lines) else 'NA'
-        defend_value = defend_lines[i] if i < len(defend_lines) else 'NA'
-        table_message += f"║ {attack_value:<18} │ {defend_value:<18} \n"
+        attack_value = str(attack_lines[i]) if i < len(attack_lines) else 'NA'
+        defend_value = str(defend_lines[i]) if i < len(defend_lines) else 'NA'
+        table_message += f"║ {attack_value:^15} │ {defend_value:^15} ║\n"
 
     # Add net gain/loss row
     table_message += f"╠═════════════════╧═════════════════\n"
