@@ -98,16 +98,16 @@ def fetch_top_clan_trophies():
 # Function to format the trophy list as a table with reordered columns
 def format_trophy_table(members):
     table_message = "<pre>"
-    table_message += "╔═══╤════════╤═════════════════════\n"
-    table_message += "║ # │ Trophy │ Name                \n"
-    table_message += "╠═══╪════════╪═════════════════════\n"
+    table_message += "╔══╤═══════╤════════════════════════════╗\n"
+    table_message += "║ #│Trophy│ Name                       ║\n"
+    table_message += "╠══╪═══════╪════════════════════════════╣\n"
 
     for idx, member in enumerate(members, start=1):
         name = member['name'][:25]  # Truncate names to fit within the table
         trophies = member['trophies']
-        table_message += f"║{idx:<2} │ {trophies:^7}│ {name:<25}\n"
+        table_message += f"║{idx:<2}│{trophies:^7}│ {name:<25} ║\n"
 
-    table_message += "╚═══╧════════╧═════════════════════\n"
+    table_message += "╚══╧═══════╧════════════════════════════╝\n"
     table_message += "</pre>"
 
     return table_message
@@ -189,11 +189,11 @@ def create_status_table_html(conn, tag, date):
         defend_value = defend_lines[i] if i < len(defend_lines) else 'NA'
         table_message += f"║ {attack_value:^13} │ {defend_value:^13} ║\n"
 
-        # Add net gain/loss row
-        table_message += f"╠═══════════════╧═══════════════╣\n"
-        table_message += f"║ Trophy Gain: {net_trophy_gain:^5} \n"
-        table_message += f"╚═══════════════════════════════╝\n"
-        table_message += f"</pre>"
+    # Add net gain/loss row
+    table_message += f"╠═══════════════╧═══════════════╣\n"
+    table_message += f"║ Net Gain: {net_trophy_gain:^5} ║\n"
+    table_message += f"╚═══════════════════════════════╝\n"
+    table_message += f"</pre>"
 
     return table_message
 
@@ -237,6 +237,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Function to reset player stats daily at 12:07 PM UTC+7
 async def reset_player_stats(application):
+    logging.info("Executing reset_player_stats function.")
     conn = init_db()
     cursor = conn.cursor()
     # Prepare for a new day
@@ -274,7 +275,8 @@ def main():
     scheduler = AsyncIOScheduler()
     scheduler.add_job(check_trophy_differences, 'interval', seconds=45, args=[application])  # Run every 45 seconds
     # Schedule reset of player stats at 12:07 PM UTC+7 daily (5:07 AM UTC)
-    scheduler.add_job(reset_player_stats, 'cron', hour=5, minute=9, args=[application])  # UTC+7 is UTC-2 in cron
+    # scheduler.add_job(reset_player_stats, 'cron', hour=5, minute=7, args=[application])  # UTC+7 is UTC+7 in cron
+    scheduler.add_job(reset_player_stats, 'interval', minutes=1, args=[application])
     scheduler.start()
 
     # Run the application
