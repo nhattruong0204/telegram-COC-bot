@@ -29,6 +29,9 @@ if not API_KEY or not CLAN_TAG or not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
     logging.error("API_KEY, CLAN_TAG, TELEGRAM_TOKEN, or TELEGRAM_CHAT_ID not set. Please check your .env file.")
     exit(1)
 
+# Define the UTC+7 timezone
+UTC_PLUS_7 = timezone(timedelta(hours=7))
+
 # Dictionary to store previous trophies using player tags
 previous_trophies = {}
 
@@ -181,7 +184,7 @@ def format_trophy_table(members):
 async def check_trophy_differences(application):
     logging.info("Checking for trophy changes...")
     conn = init_db()
-    current_datetime = datetime.now(timezone.utc)  # Use timezone-aware datetime
+    current_datetime = datetime.now(UTC_PLUS_7)  # Use UTC+7 timezone
     top_members, _ = fetch_top_clan_trophies()
     if top_members is None:
         logging.error("Failed to fetch data for trophy differences check.")
@@ -239,7 +242,7 @@ def create_status_table_html(conn, tag, date):
     total_defend_trophies = sum(int(trophy.split(": ")[1]) for trophy in defend_lines)
 
     # Calculate net trophy gain/loss
-    net_trophy_gain = total_attack_trophies - total_defend_trophies
+    net_trophy_gain = total_attack_trophies + total_defend_trophies
 
     # Create a compact table using box-drawing characters
     table_message = f"<pre>"
@@ -275,7 +278,7 @@ async def check_player_status(update: Update, context: ContextTypes.DEFAULT_TYPE
     
     tag = context.args[0].strip()
     conn = init_db()
-    current_date = datetime.now(timezone.utc).date()  # Use timezone-aware datetime
+    current_date = datetime.now(UTC_PLUS_7).date()  # Use UTC+7 timezone
     response_message = create_status_table_html(conn, tag, current_date)
     conn.close()
     await update.message.reply_text(response_message, parse_mode=ParseMode.HTML)
@@ -305,7 +308,7 @@ async def reset_player_stats(application):
     conn = init_db()
     cursor = conn.cursor()
     # Prepare for a new day
-    current_date = datetime.now(timezone.utc).date()  # Use timezone-aware datetime
+    current_date = datetime.now(UTC_PLUS_7).date()  # Use UTC+7 timezone
     new_day_date = current_date + timedelta(days=1)
     
     # Insert initial records for the next day with the current trophies
