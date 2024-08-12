@@ -248,7 +248,7 @@ def create_status_table_html(conn, tag, date):
     # Create a compact table using box-drawing characters
     table_message = f"<pre>"
     table_message += f"╔════════════════╤════════════════\n"
-    table_message += f"║ Attacks: {total_attack_trophies:^8}│ Defends: {total_defend_trophies:^8} \n"
+    table_message += f"║ Attacks: {total_attack_trophies:^6}│ Defends: {total_defend_trophies:^6} \n"
     table_message += f"╠════════════════╪════════════════\n"
 
     # Dynamically add rows for each attack and defense
@@ -256,7 +256,7 @@ def create_status_table_html(conn, tag, date):
     for i in range(max_lines):
         attack_value = str(attack_lines[i]) if i < len(attack_lines) else 'NA'
         defend_value = str(defend_lines[i]) if i < len(defend_lines) else 'NA'
-        table_message += f"║ {attack_value:^15} │ {defend_value:^15}\n"
+        table_message += f"║ {attack_value:^14} │ {defend_value:^14}\n"
 
     # Add net gain/loss row
     table_message += f"╠════════════════╧════════════════\n"
