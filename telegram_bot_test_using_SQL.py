@@ -246,9 +246,9 @@ def create_status_table_html(conn, tag, date):
 
     # Create a compact table using box-drawing characters
     table_message = f"<pre>"
-    table_message += f"╔════════════════════╤════════════════════\n"
+    table_message += f"╔═════════════════╤═════════════════\n"
     table_message += f"║ Attacks: {total_attack_trophies:^10}│ Defends: {total_defend_trophies:^10} \n"
-    table_message += f"╠════════════════════╪════════════════════\n"
+    table_message += f"╠═════════════════╪═════════════════\n"
 
     # Dynamically add rows for each attack and defense
     max_lines = max(len(attack_lines), len(defend_lines))
@@ -258,9 +258,9 @@ def create_status_table_html(conn, tag, date):
         table_message += f"║ {attack_value:<18} │ {defend_value:<18} \n"
 
     # Add net gain/loss row
-    table_message += f"╠════════════════════╧════════════════════\n"
+    table_message += f"╠═════════════════╧═════════════════\n"
     table_message += f"║ Net Gain: {net_trophy_gain:^17} \n"
-    table_message += f"╚═════════════════════════════════════════\n"
+    table_message += f"╚═══════════════════════════════════\n"
     table_message += f"</pre>"
 
     return table_message
