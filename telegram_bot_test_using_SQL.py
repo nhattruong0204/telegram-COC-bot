@@ -3,7 +3,7 @@ import logging
 import os
 import html
 import sqlite3
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
 from telegram.constants import ParseMode
@@ -116,7 +116,7 @@ def format_trophy_table(members):
 async def check_trophy_differences(application):
     logging.info("Checking for trophy changes...")
     conn = init_db()
-    current_date = datetime.utcnow().date()
+    current_date = datetime.now(timezone.utc).date()  # Use timezone-aware datetime
     top_members, _ = fetch_top_clan_trophies()
     if top_members is None:
         logging.error("Failed to fetch data for trophy differences check.")
@@ -210,7 +210,7 @@ async def check_player_status(update: Update, context: ContextTypes.DEFAULT_TYPE
     
     tag = context.args[0].strip()
     conn = init_db()
-    current_date = datetime.utcnow().date()
+    current_date = datetime.now(timezone.utc).date()  # Use timezone-aware datetime
     response_message = create_status_table_html(conn, tag, current_date)
     conn.close()
     await update.message.reply_text(response_message, parse_mode=ParseMode.HTML)
@@ -235,12 +235,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data == 'check_status':
         await query.message.reply_text('Please enter the player tag using /check_status <player_tag> command.')
 
-# Function to reset player stats daily at 12:00 PM UTC+7
+# Function to reset player stats daily at 12:07 PM UTC+7
 async def reset_player_stats(application):
     conn = init_db()
     cursor = conn.cursor()
     # Prepare for a new day
-    current_date = datetime.utcnow().date()
+    current_date = datetime.now(timezone.utc).date()  # Use timezone-aware datetime
     new_day_date = current_date + timedelta(days=1)
     
     # Insert initial records for the next day with the current trophies
@@ -257,7 +257,6 @@ async def reset_player_stats(application):
 
     # Send notification to Telegram
     formatted_date = new_day_date.strftime("%Y-%m-%d")
-    # Include the date in the notification message
     new_day_message = f"NEW LEGEND LEAGUE DAY START: {formatted_date}"
     await application.bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=new_day_message)
 
@@ -273,9 +272,9 @@ def main():
 
     # Set up the scheduler
     scheduler = AsyncIOScheduler()
-    scheduler.add_job(check_trophy_differences, 'interval', seconds=45, args=[application])
-    # Schedule reset of player stats at 12:00 PM UTC+7 daily
-    scheduler.add_job(reset_player_stats, 'cron', hour=5, minute=0, args=[application])  # UTC+7 is UTC-2 in cron
+    scheduler.add_job(check_trophy_differences, 'interval', seconds=45, args=[application])  # Run every 45 seconds
+    # Schedule reset of player stats at 12:07 PM UTC+7 daily (5:07 AM UTC)
+    scheduler.add_job(reset_player_stats, 'cron', hour=5, minute=9, args=[application])  # UTC+7 is UTC-2 in cron
     scheduler.start()
 
     # Run the application
