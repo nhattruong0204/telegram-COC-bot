@@ -22,8 +22,8 @@ load_dotenv()
 # Retrieve API_KEY, CLAN_TAG, TELEGRAM_TOKEN, and TELEGRAM_CHAT_ID from environment variables
 API_KEY = os.getenv('API_KEY')
 CLAN_TAG = os.getenv('CLAN_TAG')
-TELEGRAM_TOKEN = os.getenv('TELEGRAM_TEST_TOKEN')
-TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_TEST_CHAT_ID')
+TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
+TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 
 if not API_KEY or not CLAN_TAG or not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
     logging.error("API_KEY, CLAN_TAG, TELEGRAM_TOKEN, or TELEGRAM_CHAT_ID not set. Please check your .env file.")
@@ -37,50 +37,25 @@ def init_db():
     conn = sqlite3.connect('clash_of_clans.db')
     cursor = conn.cursor()
     cursor.execute('''
-    CREATE TABLE IF NOT EXISTS player_stats (
+    CREATE TABLE IF NOT EXISTS player_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         tag TEXT,
         name TEXT,
         date DATE,
-        trophies INTEGER,
-        attacks INTEGER DEFAULT 0,
-        defends INTEGER DEFAULT 0,
-        attack_trophies INTEGER DEFAULT 0,
-        defend_trophies INTEGER DEFAULT 0,
-        PRIMARY KEY (tag, date)
+        event_type TEXT, -- 'attack' or 'defend'
+        trophy_change INTEGER
     )
     ''')
     conn.commit()
     return conn
 
-# Update or insert player data for a specific date
-def update_player_data(conn, tag, name, trophies, date, attack_change=0, defend_change=0):
+# Record an event in the database
+def record_event(conn, tag, name, date, event_type, trophy_change):
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM player_stats WHERE tag = ? AND date = ?', (tag, date))
-    result = cursor.fetchone()
-
-    if result:
-        attacks, defends, attack_trophies, defend_trophies = result[4], result[5], result[6], result[7]
-        if attack_change > 0:
-            attacks += 1
-            attack_trophies += attack_change
-        elif defend_change > 0:
-            defends += 1
-            defend_trophies += defend_change
-        
-        cursor.execute('''
-            UPDATE player_stats
-            SET name = ?, trophies = ?, attacks = ?, defends = ?, attack_trophies = ?, defend_trophies = ?
-            WHERE tag = ? AND date = ?
-        ''', (name, trophies, attacks, defends, attack_trophies, defend_trophies, tag, date))
-    else:
-        attacks = 1 if attack_change > 0 else 0
-        defends = 1 if defend_change > 0 else 0
-        attack_trophies = attack_change if attack_change > 0 else 0
-        defend_trophies = defend_change if defend_change > 0 else 0
-        cursor.execute('''
-            INSERT INTO player_stats (tag, name, date, trophies, attacks, defends, attack_trophies, defend_trophies)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (tag, name, date, trophies, attacks, defends, attack_trophies, defend_trophies))
+    cursor.execute('''
+    INSERT INTO player_events (tag, name, date, event_type, trophy_change)
+    VALUES (?, ?, ?, ?, ?)
+    ''', (tag, name, date, event_type, trophy_change))
     conn.commit()
 
 # Function to fetch top 15 clan members by trophies
@@ -161,11 +136,8 @@ async def check_trophy_differences(application):
             changes_detected = True
             
             # Determine if the change was an attack or defend
-            attack_change = trophy_difference if trophy_difference > 0 else 0
-            defend_change = abs(trophy_difference) if trophy_difference < 0 else 0
-
-            # Update the player data in the database for the current date
-            update_player_data(conn, tag, name, trophies, current_date, attack_change, defend_change)
+            event_type = 'attack' if trophy_difference > 0 else 'defend'
+            record_event(conn, tag, name, current_date, event_type, abs(trophy_difference))
 
             # Escape any HTML special characters in player name and tag
             safe_name = html.escape(name)
@@ -191,39 +163,31 @@ async def check_trophy_differences(application):
 # Function to create a table-like message for player status with HTML formatting
 def create_status_table_html(conn, tag, date):
     cursor = conn.cursor()
-    cursor.execute('SELECT attacks, defends, attack_trophies, defend_trophies FROM player_stats WHERE tag = ? AND date = ?', (tag, date))
-    result = cursor.fetchone()
+    cursor.execute('SELECT event_type, trophy_change FROM player_events WHERE tag = ? AND date = ?', (tag, date))
+    rows = cursor.fetchall()
 
-    if result:
-        attacks, defends, attack_trophies, defend_trophies = result
+    attack_lines = [str(row[1]) for row in rows if row[0] == 'attack']
+    defend_lines = [str(row[1]) for row in rows if row[0] == 'defend']
 
-        # Retrieve detailed attacks and defends data from player_stats table
-        cursor.execute('SELECT attack_trophies, defend_trophies FROM player_stats WHERE tag = ? AND date = ?', (tag, date))
-        rows = cursor.fetchall()
+    # Calculate total trophies gained and lost
+    total_attack_trophies = sum(int(trophy) for trophy in attack_lines)
+    total_defend_trophies = sum(int(trophy) for trophy in defend_lines)
 
-        # Initialize lists to store individual attack and defend trophy changes
-        attack_lines = [row[0] for row in rows if row[0] > 0]
-        defend_lines = [row[1] for row in rows if row[1] > 0]
+    # Calculate net trophy gain/loss
+    net_trophy_gain = total_attack_trophies - total_defend_trophies
 
-        # Calculate net trophy gain/loss
-        net_trophy_gain = attack_trophies - defend_trophies
+    # Create a compact table using box-drawing characters
+    table_message = f"<pre>"
+    table_message += f"╔═══════════════╤═══════════════╗\n"
+    table_message += f"║ Attacks: {total_attack_trophies:^4} │ Defends: {total_defend_trophies:^4} ║\n"
+    table_message += f"╠═══════════════╪═══════════════╣\n"
 
-        # Create a compact table using box-drawing characters
-        table_message = f"<pre>"
-        table_message += f"╔═══════════════╤═══════════════╗\n"
-        table_message += f"║ Attacks: {attack_trophies:^4} │ Defends: {defend_trophies:^4} ║\n"
-        table_message += f"╠═══════════════╪═══════════════╣\n"
-
-        # Dynamically add rows for each attack and defense
-        for attack, defend in zip(attack_lines, defend_lines):
-            table_message += f"║ {str(attack):^13} │ {str(defend):^13} ║\n"
-
-        # Handle cases where there are more attacks or defends than the other
-        max_lines = max(len(attack_lines), len(defend_lines))
-        for i in range(max_lines - len(attack_lines)):
-            table_message += f"║ {'NA':^13} │ {str(defend_lines[i + len(attack_lines)]):^13} ║\n"
-        for i in range(max_lines - len(defend_lines)):
-            table_message += f"║ {str(attack_lines[i + len(defend_lines)]):^13} │ {'NA':^13} ║\n"
+    # Dynamically add rows for each attack and defense
+    max_lines = max(len(attack_lines), len(defend_lines))
+    for i in range(max_lines):
+        attack_value = attack_lines[i] if i < len(attack_lines) else 'NA'
+        defend_value = defend_lines[i] if i < len(defend_lines) else 'NA'
+        table_message += f"║ {attack_value:^13} │ {defend_value:^13} ║\n"
 
         # Add net gain/loss row
         table_message += f"╠═══════════════╧═══════════════╣\n"
@@ -231,9 +195,7 @@ def create_status_table_html(conn, tag, date):
         table_message += f"╚═══════════════════════════════╝\n"
         table_message += f"</pre>"
 
-        return table_message
-
-    return "<b>No data available for this player.</b>"
+    return table_message
 
 # Command handler to check trophy information
 async def check_trophy(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -283,16 +245,17 @@ async def reset_player_stats(application):
     
     # Insert initial records for the next day with the current trophies
     cursor.execute('''
-    INSERT INTO player_stats (tag, name, date, trophies, attacks, defends, attack_trophies, defend_trophies)
-    SELECT tag, name, ?, trophies, 0, 0, 0, 0
-    FROM player_stats
+    INSERT INTO player_events (tag, name, date, event_type, trophy_change)
+    SELECT tag, name, ?, 'initial', trophies
+    FROM player_events
     WHERE date = ?
+    GROUP BY tag
     ''', (new_day_date, current_date))
     conn.commit()
     logging.info("Resetting player stats for a new day.")
     conn.close()
 
-    # Format the date as "YYYY-MM-DD"
+    # Send notification to Telegram
     formatted_date = new_day_date.strftime("%Y-%m-%d")
     # Include the date in the notification message
     new_day_message = f"NEW LEGEND LEAGUE DAY START: {formatted_date}"
