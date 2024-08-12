@@ -227,7 +227,7 @@ def create_status_table_html(conn, tag, date):
 
         # Add net gain/loss row
         table_message += f"╠═══════════════╧═══════════════╣\n"
-        table_message += f"║ Net Gain: {net_trophy_gain:^5} ║\n"
+        table_message += f"║ Trophy Gain: {net_trophy_gain:^5} \n"
         table_message += f"╚═══════════════════════════════╝\n"
         table_message += f"</pre>"
 
@@ -292,8 +292,10 @@ async def reset_player_stats(application):
     logging.info("Resetting player stats for a new day.")
     conn.close()
 
-    # Send notification to Telegram
-    new_day_message = "NEW LEGEND LEAGUE DAY START"
+    # Format the date as "YYYY-MM-DD"
+    formatted_date = new_day_date.strftime("%Y-%m-%d")
+    # Include the date in the notification message
+    new_day_message = f"NEW LEGEND LEAGUE DAY START: {formatted_date}"
     await application.bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=new_day_message)
 
 def main():
