@@ -22,8 +22,8 @@ load_dotenv()
 # Retrieve API_KEY, CLAN_TAG, TELEGRAM_TOKEN, and TELEGRAM_CHAT_ID from environment variables
 API_KEY = os.getenv('API_KEY')
 CLAN_TAG = os.getenv('CLAN_TAG')
-TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
-TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
+TELEGRAM_TOKEN = os.getenv('TELEGRAM_TEST_TOKEN')
+TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_TEST_CHAT_ID')
 
 if not API_KEY or not CLAN_TAG or not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
     logging.error("API_KEY, CLAN_TAG, TELEGRAM_TOKEN, or TELEGRAM_CHAT_ID not set. Please check your .env file.")
@@ -214,8 +214,16 @@ def create_status_table_html(conn, tag, date):
         table_message += f"║ Attacks: {attack_trophies:^4} │ Defends: {defend_trophies:^4} ║\n"
         table_message += f"╠═══════════════╪═══════════════╣\n"
 
+        # Dynamically add rows for each attack and defense
         for attack, defend in zip(attack_lines, defend_lines):
             table_message += f"║ {str(attack):^13} │ {str(defend):^13} ║\n"
+
+        # Handle cases where there are more attacks or defends than the other
+        max_lines = max(len(attack_lines), len(defend_lines))
+        for i in range(max_lines - len(attack_lines)):
+            table_message += f"║ {'NA':^13} │ {str(defend_lines[i + len(attack_lines)]):^13} ║\n"
+        for i in range(max_lines - len(defend_lines)):
+            table_message += f"║ {str(attack_lines[i + len(defend_lines)]):^13} │ {'NA':^13} ║\n"
 
         # Add net gain/loss row
         table_message += f"╠═══════════════╧═══════════════╣\n"
