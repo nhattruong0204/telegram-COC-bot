@@ -281,24 +281,10 @@ async def check_trophy(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logging.error("Failed to fetch top clan members.")
         await update.message.reply_text("Failed to fetch top clan members.", parse_mode=ParseMode.HTML)
 
-# Command handler to check player status by tag
-async def check_player_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not context.args:
-        await update.message.reply_text('Please provide a player tag. Usage: /check_status <player_tag>')
-        return
-    
-    tag = context.args[0].strip()
-    conn = init_db()
-    current_date = datetime.now(UTC_PLUS_7).date()  # Use UTC+7 timezone
-    response_message = create_status_table_html(conn, tag, current_date)
-    conn.close()
-    await update.message.reply_text(response_message, parse_mode=ParseMode.HTML)
-
 # Function to start the bot and display the check_trophy button
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
-        [InlineKeyboardButton("Check Trophy", callback_data='check_trophy')],
-        [InlineKeyboardButton("Check Player Status", callback_data='check_status')]
+        [InlineKeyboardButton("Check Trophy", callback_data='check_trophy')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text('Welcome! Use the buttons or commands to interact:', reply_markup=reply_markup)
@@ -364,7 +350,6 @@ def main():
     # Register command and button handlers
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("check_trophy", check_trophy))
-    application.add_handler(CommandHandler("check_status", check_player_status))
     application.add_handler(CallbackQueryHandler(button_handler))
 
     # Set up the scheduler
