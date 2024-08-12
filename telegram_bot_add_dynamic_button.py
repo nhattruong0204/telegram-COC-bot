@@ -355,8 +355,8 @@ def main():
     # Set up the scheduler
     scheduler = AsyncIOScheduler()
     scheduler.add_job(check_trophy_differences, 'interval', seconds=45, args=[application])  # Run every 45 seconds
-    # Adjust scheduler for resetting player stats at 12:00 PM UTC-5 daily (5:00 AM UTC)
-    scheduler.add_job(reset_player_stats, 'cron', hour=17, minute=0, args=[application])  # UTC-5 is 17:00
+    # Adjust scheduler for resetting player stats at 12:00 PM UTC+7 daily (which mean 0:00AM UTC -5)
+    scheduler.add_job(reset_player_stats, 'cron', hour=0, minute=0, args=[application])  
 
     scheduler.start()
 
