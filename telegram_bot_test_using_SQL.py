@@ -243,21 +243,21 @@ def create_status_table_html(conn, tag, date):
 
     # Create a compact table using box-drawing characters
     table_message = f"<pre>"
-    table_message += f"╔════════════════════╤════════════════════╗\n"
-    table_message += f"║ Attacks: {total_attack_trophies:^10} │ Defends: {total_defend_trophies:^10} ║\n"
-    table_message += f"╠════════════════════╪════════════════════╣\n"
+    table_message += f"╔════════════════════╤════════════════════\n"
+    table_message += f"║ Attacks: {total_attack_trophies:^10}│ Defends: {total_defend_trophies:^10} \n"
+    table_message += f"╠════════════════════╪════════════════════\n"
 
     # Dynamically add rows for each attack and defense
     max_lines = max(len(attack_lines), len(defend_lines))
     for i in range(max_lines):
         attack_value = attack_lines[i] if i < len(attack_lines) else 'NA'
         defend_value = defend_lines[i] if i < len(defend_lines) else 'NA'
-        table_message += f"║ {attack_value:<18} │ {defend_value:<18} ║\n"
+        table_message += f"║ {attack_value:<18} │ {defend_value:<18} \n"
 
     # Add net gain/loss row
-    table_message += f"╠════════════════════╧════════════════════╣\n"
-    table_message += f"║ Net Gain: {net_trophy_gain:^17} ║\n"
-    table_message += f"╚════════════════════════════════════════╝\n"
+    table_message += f"╠════════════════════╧════════════════════\n"
+    table_message += f"║ Net Gain: {net_trophy_gain:^17} \n"
+    table_message += f"╚═════════════════════════════════════════\n"
     table_message += f"</pre>"
 
     return table_message
@@ -338,8 +338,9 @@ def main():
     # Set up the scheduler
     scheduler = AsyncIOScheduler()
     scheduler.add_job(check_trophy_differences, 'interval', seconds=45, args=[application])  # Run every 45 seconds
-    # Schedule reset of player stats at 12:07 PM UTC+7 daily (5:07 AM UTC)
-    scheduler.add_job(reset_player_stats, 'cron', hour=5, minute=9, args=[application])  # UTC+7 is UTC-2 in cron
+    # Adjust scheduler for resetting player stats at 12:00 PM UTC+7 daily (5:00 AM UTC)
+    scheduler.add_job(reset_player_stats, 'cron', hour=5, minute=0, args=[application])  # UTC+7 is UTC-2 in cron
+
     scheduler.start()
 
     # Run the application
