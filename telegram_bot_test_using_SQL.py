@@ -254,8 +254,8 @@ def create_status_table_html(conn, tag, date):
     # Dynamically add rows for each attack and defense
     max_lines = max(len(attack_lines), len(defend_lines))
     for i in range(max_lines):
-        attack_value = str(attack_lines[i]) if i < len(attack_lines) else 'NA'
-        defend_value = str(defend_lines[i]) if i < len(defend_lines) else 'NA'
+        attack_value = str(attack_lines[i]) if i < len(attack_lines) else ''
+        defend_value = str(defend_lines[i]) if i < len(defend_lines) else ''
         table_message += f"║ {attack_value:^14} │ {defend_value:^14}\n"
 
     # Add net gain/loss row
