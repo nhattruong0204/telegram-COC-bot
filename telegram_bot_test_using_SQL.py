@@ -308,7 +308,7 @@ def main():
 
     # Set up the scheduler
     scheduler = AsyncIOScheduler()
-    scheduler.add_job(check_trophy_differences, 'interval', seconds=90, args=[application])
+    scheduler.add_job(check_trophy_differences, 'interval', seconds=45, args=[application])
     # Schedule reset of player stats at 12:00 PM UTC+7 daily
     scheduler.add_job(reset_player_stats, 'cron', hour=5, minute=0, args=[application])  # UTC+7 is UTC-2 in cron
     scheduler.start()
