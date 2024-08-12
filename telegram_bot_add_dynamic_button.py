@@ -269,32 +269,36 @@ def create_status_table_html(conn, tag, date):
 # Command handler to check trophy information
 async def check_trophy(update: Update, context: ContextTypes.DEFAULT_TYPE):
     top_members, trophy_list_message = fetch_top_clan_trophies()
-    if top_members is None:
+    if top_members:
+        logging.debug("Top clan members fetched successfully.")
+        # Generate buttons for each player
+        keyboard = [[InlineKeyboardButton(f"{member['name']} ({member['tag']})", callback_data=f"status_{member['tag']}")] for member in top_members]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        # Send the trophy list and buttons to the channel
+        await update.message.reply_text(trophy_list_message, parse_mode=ParseMode.HTML, reply_markup=reply_markup)
+    else:
+        logging.error("Failed to fetch top clan members.")
         await update.message.reply_text("Failed to fetch top clan members.", parse_mode=ParseMode.HTML)
-        return
-
-    # Generate buttons for each player
-    keyboard = [[InlineKeyboardButton(f"{member['name']} ({member['tag']})", callback_data=f"status_{member['tag']}")] for member in top_members]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-
-    await update.message.reply_text(trophy_list_message, parse_mode=ParseMode.HTML, reply_markup=reply_markup)
 
 # Command handler to check player status by tag
 async def check_player_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    tag = query.data.split('_')[1]  # Extract player tag from callback data
-
+    if not context.args:
+        await update.message.reply_text('Please provide a player tag. Usage: /check_status <player_tag>')
+        return
+    
+    tag = context.args[0].strip()
     conn = init_db()
     current_date = datetime.now(UTC_PLUS_7).date()  # Use UTC+7 timezone
     response_message = create_status_table_html(conn, tag, current_date)
     conn.close()
-
-    await context.bot.send_message(chat_id=query.message.chat_id, text=response_message, parse_mode=ParseMode.HTML)
+    await update.message.reply_text(response_message, parse_mode=ParseMode.HTML)
 
 # Function to start the bot and display the check_trophy button
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("Check Trophy", callback_data='check_trophy')],
+        [InlineKeyboardButton("Check Player Status", callback_data='check_status')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text('Welcome! Use the buttons or commands to interact:', reply_markup=reply_markup)
@@ -302,9 +306,31 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Callback query handler to process button presses
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    if query.data.startswith('status_'):
-        await check_player_status(update, context)
     await query.answer()
+
+    if query.data == 'check_trophy':
+        logging.debug("Fetching top clan trophies...")
+        top_members, trophy_list_message = fetch_top_clan_trophies()
+        if top_members:
+            logging.debug("Top clan members fetched successfully.")
+            # Generate buttons for each player
+            keyboard = [[InlineKeyboardButton(f"{member['name']} ({member['tag']})", callback_data=f"status_{member['tag']}")] for member in top_members]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+
+            # Send the trophy list and buttons to the channel
+            await context.bot.send_message(chat_id=query.message.chat_id, text=trophy_list_message, parse_mode=ParseMode.HTML, reply_markup=reply_markup)
+        else:
+            logging.error("Failed to fetch top clan members.")
+            await query.message.reply_text("Failed to fetch top clan members.", parse_mode=ParseMode.HTML)
+
+    elif query.data.startswith('status_'):
+        tag = query.data.split('_')[1]
+        logging.debug(f"Checking status for player with tag: {tag}")
+        conn = init_db()
+        current_date = datetime.now(UTC_PLUS_7).date()  # Use UTC+7 timezone
+        response_message = create_status_table_html(conn, tag, current_date)
+        conn.close()
+        await query.message.reply_text(response_message, parse_mode=ParseMode.HTML)
 
 # Function to reset player stats daily at 12:00 PM UTC+7
 async def reset_player_stats(application):
@@ -338,6 +364,7 @@ def main():
     # Register command and button handlers
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("check_trophy", check_trophy))
+    application.add_handler(CommandHandler("check_status", check_player_status))
     application.add_handler(CallbackQueryHandler(button_handler))
 
     # Set up the scheduler
