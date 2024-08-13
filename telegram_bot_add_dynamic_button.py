@@ -126,7 +126,7 @@ def update_daily_stats(conn, tag, name, date):
 
     conn.commit()
 
-# Function to fetch top 15 clan members by trophies
+# Function to fetch top 20 clan members by trophies
 def fetch_top_clan_trophies():
     logging.info("Fetching clan trophies...")
     url = f"https://api.clashofclans.com/v1/clans/{CLAN_TAG.replace('#', '%23')}"
@@ -145,8 +145,8 @@ def fetch_top_clan_trophies():
         # Sort members by trophies in descending order
         sorted_members = sorted(members, key=lambda member: member['trophies'], reverse=True)
         
-        # Get the top 15 members
-        top_members = sorted_members[:15]
+        # Get the top 20 members
+        top_members = sorted_members[:20]
         
         # Format the trophy list as a table
         trophy_list_message = format_trophy_table(top_members)
