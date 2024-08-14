@@ -213,11 +213,19 @@ async def check_trophy_differences(application):
             safe_tag = html.escape(tag)
 
             # Create and send the trophy change message using HTML formatting
-            trophy_change_message = (
-                f"<b>{idx}. {safe_name}</b> (Tag: <code>{safe_tag}</code>): <b>{trophies} trophies</b> "
-                f"(Change: <i>{trophy_difference}</i>)\n"
-                f"<b>Status Table:</b>\n{create_status_table_html(conn, tag, current_datetime.date(), date_str)}"
-            )
+            if trophy_difference > 0:
+                trophy_change_message = (
+                    f"<b>{idx}. {safe_name}</b> (Tag: <code>{safe_tag}</code>): <b>{trophies} trophies</b> "
+                    f"(ATK win: <i>{trophy_difference}</i>)\n"
+                    f"<b>Status Table:</b>\n{create_status_table_html(conn, tag, current_datetime.date())}"
+                )
+            else:
+                trophy_change_message = (
+                    f"<b>{idx}. {safe_name}</b> (Tag: <code>{safe_tag}</code>): <b>{trophies} trophies</b> "
+                    f"(DEF lost: <i>{trophy_difference}</i>)\n"
+                    f"<b>Status Table:</b>\n{create_status_table_html(conn, tag, current_datetime.date())}"
+                )
+
             logging.debug(f"Sending message: {trophy_change_message}")
             await application.bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=trophy_change_message, parse_mode=ParseMode.HTML)
 
@@ -347,7 +355,7 @@ def main():
     application.add_handler(CallbackQueryHandler(button_handler))
 
     # Set up the scheduler
-    scheduler = AsyncIOScheduler()
+    scheduler = AsyncIOScheduler(timezone=UTC_MINUS_5)  # Use UTC-5 timezone
     scheduler.add_job(check_trophy_differences, 'interval', seconds=45, args=[application])  # Run every 45 seconds
     # Adjust scheduler for resetting player stats at 12:00 PM UTC+7 daily (which mean 0:00AM UTC -5)
     scheduler.add_job(reset_player_stats, 'cron', hour=0, minute=0, args=[application])  
