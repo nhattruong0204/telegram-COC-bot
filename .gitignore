@@ -1,0 +1,4 @@
+.env
+*.pyc
+__pycache__/
+clash_of_clans.db
