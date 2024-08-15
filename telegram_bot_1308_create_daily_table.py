@@ -217,13 +217,13 @@ async def check_trophy_differences(application):
                 trophy_change_message = (
                     f"<b>{idx}. {safe_name}</b> (Tag: <code>{safe_tag}</code>): <b>{trophies} trophies</b> "
                     f"(ATK win: <i>{trophy_difference}</i>)\n"
-                    f"<b>Status Table:</b>\n{create_status_table_html(conn, tag, current_datetime.date())}"
+                    f"<b>Status Table:</b>\n{create_status_table_html(conn, tag, current_datetime.date(), date_str)}"
                 )
             else:
                 trophy_change_message = (
                     f"<b>{idx}. {safe_name}</b> (Tag: <code>{safe_tag}</code>): <b>{trophies} trophies</b> "
                     f"(DEF lost: <i>{trophy_difference}</i>)\n"
-                    f"<b>Status Table:</b>\n{create_status_table_html(conn, tag, current_datetime.date())}"
+                    f"<b>Status Table:</b>\n{create_status_table_html(conn, tag, current_datetime.date(), date_str)}"
                 )
 
             logging.debug(f"Sending message: {trophy_change_message}")
