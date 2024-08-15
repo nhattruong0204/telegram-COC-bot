@@ -321,9 +321,11 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data.startswith('status_'):
         tag = query.data.split('_')[1]
         logging.debug(f"Checking status for player with tag: {tag}")
-        conn = init_db()
+        
         current_date = datetime.now(UTC_MINUS_5).date()  # Use UTC-5 timezone
-        response_message = create_status_table_html(conn, tag, current_date)
+        date_str = current_date.strftime('%m%d')  # Get the date string for the database tables
+        conn = init_db_for_date(date_str)  # Use the correct function to initialize the database for the specific date
+        response_message = create_status_table_html(conn, tag, current_date, date_str)  # Pass date_str as an argument
         conn.close()
         await query.message.reply_text(response_message, parse_mode=ParseMode.HTML)
 
