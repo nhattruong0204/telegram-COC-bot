@@ -347,6 +347,15 @@ async def reset_player_stats(application):
     new_day_message = f"NEW LEGEND LEAGUE DAY START: {formatted_date}"
     await application.bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=new_day_message)
 
+    # Fetch and send the top 25 players' trophy at the end of each day
+    top_members, trophy_list_message = fetch_top_clan_trophies()
+    if top_members:
+        logging.info("Sending top 25 players' trophy information to the Telegram chat.")
+        await application.bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=trophy_list_message, parse_mode=ParseMode.HTML)
+    else:
+        logging.error("Failed to fetch top clan members during daily reset.")
+        await application.bot.send_message(chat_id=TELEGRAM_CHAT_ID, text="Failed to fetch top clan members.", parse_mode=ParseMode.HTML)
+
 def main():
     # Create the Application and pass it your bot's token
     application = ApplicationBuilder().token(TELEGRAM_TOKEN).read_timeout(30).write_timeout(30).connect_timeout(30).pool_timeout(30).build()
